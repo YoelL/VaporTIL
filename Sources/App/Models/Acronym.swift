@@ -13,8 +13,8 @@ final class Acronym: Codable {
 	}
 }
 
-//Conform to SQLiteModel
-//default
 extension Acronym: PostgreSQLModel {}
 extension Acronym: Migration {}
 extension Acronym: Content {}
+//Retrieve a single acronym
+extension Acronym: Parameter {}
