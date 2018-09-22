@@ -1,4 +1,6 @@
 import Vapor
+import Fluent
+
 
 /// Register your application's routes here.
 public func routes(_ router: Router) throws {
@@ -57,6 +59,60 @@ public func routes(_ router: Router) throws {
 		.delete(on: req)
 		// 4
 		.transform(to: HTTPStatus.noContent)
+	}
+	
+	
+	/// Searching with Fluent- GET, pg - 108
+	// http://localhost:8080/api/acronyms/search?term=WTF
+	// 1 uses Retrive All - GET as well  to fetch all short Acronyms
+	router.get("api", "acronyms", "search") {
+		req -> Future<[Acronym]> in
+		// 2
+		guard
+			let searchTerm = req.query[String.self, at: "term"] else {
+				throw Abort(.badRequest)
+		}
+	//Short terms only -> WTF
+/*
+		return Acronym.query(on: req)
+			.filter(\.short == searchTerm)
+			.all()
+	*/
+		
+		//Short and Long  -> WTF or What The Flip
+		return Acronym.query(on: req).group(.or) { or in
+		
+			or.filter(\.short == searchTerm)
+			or.filter(\.long == searchTerm)
+			
+			}.all()
+	}
+	
+	//First result of a query - http://localhost:8080/api/acronyms/first
+	router.get("api", "acronyms", "first") {
+		req -> Future<Acronym> in
+		// 2
+		return Acronym.query(on: req)
+			// 3
+			.first()
+			.map(to: Acronym.self) { acronym in
+				guard let acronym = acronym else {
+					throw Abort(.notFound)
+				}
+				// 4
+				return acronym
+		}
+	}
+	
+	
+	
+	// Sorting results in ascending order - GET - http://localhost:8080/api/acronyms/sorted
+	router.get("api", "acronyms", "sorted") {
+		req -> Future<[Acronym]> in
+		// 2
+		return Acronym.query(on: req)
+			.sort(\.short, .ascending)
+			.all()
 	}
 	
 }
